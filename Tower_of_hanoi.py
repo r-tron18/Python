@@ -1,5 +1,6 @@
 import tkinter as tk
-import sys
+import time
+
 class Tower():
     
     def __init__(self,x,y,SIZE=0):
@@ -18,9 +19,10 @@ class Tower():
         self.size -= 1
         return self._stack.pop()
 
+
 root = tk.Tk()
-root.geometry('1000x1000+0+0')
-root.title("Moving Object Test")
+root.geometry('1000x700+0+0')
+root.title("Tower Of Hanoi")
 
 Towers = []
 all_rect=[]
@@ -28,13 +30,13 @@ ytop=100
 disty = 5
 distx = 5
 S_no = 1
-
-colors = ['blue','green','red','yellow','orange','grey']
+allow_interaction = False
+colors = ['blue','green','red','#123456','yellow','orange']
 background = tk_rgb = "#%02x%02x%02x" % (100, 40, 54)
 
 sleep = 0
-size=200
-DEC_IN_WIDTH=10
+size=300
+DEC_IN_WIDTH=20
 w=20
 
 can = tk.Canvas (root,width=1000,height=800,bg=background)
@@ -42,31 +44,53 @@ can.grid()
 
 def init(START,FINISH,DISKS=4,SLEEP=10):
     global sleep
+    global ytop
+    global allow_interaction
+    
     sleep = SLEEP
     start = START if 0<START<4 else 1
     finish = FINISH
     
     disks = DISKS if DISKS else 4
+    if disks>15:
+        disks = 4
+        print('Too many disks')
+        print('Now using only %s disks'%4)
+    ytop += disks*w + 30
+
+    if disks > 6:
+        import random
+        for itr in range(disks-6):
+            color = '#'+str(random.randint(120000,999999))
+            colors.append(color)
+
     in_disk = {1:0,2:0,3:0}         ## initial disks given 
     in_disk[start] = disks
     Tower1 = Tower(200,600,in_disk[1])
     Tower2 = Tower(500,600,in_disk[2])
     Tower3 = Tower(800,600,in_disk[3])
 
-    if start==1:
-        rect(Tower1)
-    elif start==2:
-        rect(Tower2)
-    else:
-        rect(Tower3)
+    stand(Tower1,Tower2,Tower3)
+    rect(Tower1)
+    rect(Tower2)
+    rect(Tower3)
     Towers.extend([0,Tower1,Tower2,Tower3])
 
+    ##allow_interaction = True
     TOH(disks,start,finish,6 - start - finish)
     
+def stand(*args):
+    size = 0
+    for tower in args:
+        size = max(tower.size,size)
+    for tower in args:
+        x, y = tower.x, tower.y 
+        rect = can.create_rectangle(x-5,y+w*2,x+5,y-w*size-w*4,fill='grey',width=3)
 
 def rect(tower):
     x=tower.x
     y=tower.y
+    
     for i in range(tower.size):
         p =(size - DEC_IN_WIDTH*i)//2
         rect = can.create_rectangle(x-p,y-w*i,x+p,y+w-w*i,fill=colors[i],width=3)
@@ -105,19 +129,18 @@ def move(tow1,tow2):
 def TOH(disks,tower1,tower2,tower3):
     global S_no
     if disks == 1:
-        print(S_no,'Move top disk from %d to %s'%(tower1,tower2))
+        if allow_interaction:
+            print(S_no,'Move top disk from %d to %s'%(tower1,tower2))
         S_no += 1
         move(tower1,tower2)
         return
     TOH(disks-1,tower1,tower3,tower2)
-    print(S_no,'Move top disk from %d to %s'%(tower1,tower2))
+    if allow_interaction:
+        print(S_no,'Move top disk from %d to %s'%(tower1,tower2))
     S_no += 1
     move(tower1,tower2) 
     TOH(disks-1,tower3,tower2,tower1)
     
-init(1,2,6,5)  ## disks,start tower, finish tower,sleep
+init(2,3,7,-1)  ## start tower, finish tower, disks, sleep
 
-root.after(40)
-
-
-
+time.sleep(2)
